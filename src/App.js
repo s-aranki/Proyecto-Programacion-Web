@@ -1,25 +1,29 @@
-import logo from './logo.svg';
 import './App.css';
+import Header from './components/Header';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login.jsx';
+import Publish from './pages/Publish';
+import RequireAuth from './routes/RequireAuth';
+import Home from './pages/Home.jsx';
+import AuctionDetail from './pages/AuctionDetail';
 
-function App() {
+export default function App(){
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <Header />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/publicar" element={
+            <RequireAuth>
+              <Publish />
+            </RequireAuth>
+          }
+        />
+         <Route path="/subasta/:id" element={<AuctionDetail />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
-
-export default App;
