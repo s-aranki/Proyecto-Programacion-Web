@@ -27,7 +27,9 @@ npm start
 
 `/subasta/:id` → Detalle de subasta (galería, specs, pujas)
 
+
 ### Estructura
+```
 src/
   components/
     home/
@@ -64,3 +66,4 @@ public/
   images/
     hero.jpg
     placeholder.jpg
+```
