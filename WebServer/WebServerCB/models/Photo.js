@@ -1,16 +1,21 @@
-// models/Photo.js
 const { DataTypes, Model } = require('sequelize');
 const sequelize = require('../db/sequelize');
-const Auction = require('./Auction');
 
 class Photo extends Model {}
-Photo.init({
-  id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
-  auction_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
-  url: { type: DataTypes.STRING(255), allowNull: false },
-  order: { type: DataTypes.TINYINT.UNSIGNED, defaultValue: 0 }
-}, { sequelize, modelName: 'photo' });
 
-Photo.belongsTo(Auction, { foreignKey: 'auction_id' });
+Photo.init(
+  {
+    Id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    Id_Publicacion: { type: DataTypes.INTEGER, allowNull: false },
+    Url: { type: DataTypes.STRING, allowNull: false },
+    Orden: { type: DataTypes.INTEGER, defaultValue: 0 },
+  },
+  {
+    sequelize,                      // ⬅️ IMPORTANTE
+    modelName: 'Photo',
+    tableName: 'tbl_Photo',         // usa el nombre real de tu tabla
+    timestamps: false,
+  }
+);
 
 module.exports = Photo;

@@ -91,12 +91,14 @@ async function initDb() {
   }
 }
 
-module.exports = {
-  sequelize,
-  Sequelize,
-  DataTypes,
-  Usuario,
-  Publicacion,
-  Puja,
-  initDb,
-};
+// module.exports = {
+//   sequelize,
+//   Sequelize,
+//   DataTypes,
+//   Usuario,
+//   Publicacion,
+//   Puja,
+//   initDb,
+// };
+
+module.exports = sequelize; // ⬅️ SOLO la instancia

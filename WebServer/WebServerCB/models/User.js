@@ -1,19 +1,22 @@
-// models/User.js
 const { DataTypes, Model } = require('sequelize');
-const sequelize = require('../db/sequelize');   // <- SIN { }
+const sequelize = require('../db/sequelize');
 
 class User extends Model {}
+
 User.init(
   {
-    id: { type: DataTypes.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true },
-    email: { type: DataTypes.STRING(120), allowNull: false, unique: true },
-    password_hash: { type: DataTypes.STRING(255), allowNull: false },
-    name: { type: DataTypes.STRING(100), allowNull: false },
-    role: { type: DataTypes.ENUM('buyer','seller','admin'), defaultValue: 'seller' },
+    Id_Usuario: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    Usuario: { type: DataTypes.STRING, allowNull: false },
+    Correo: { type: DataTypes.STRING, allowNull: false },
+    Contrasena: { type: DataTypes.STRING, allowNull: false },
+    Activa: { type: DataTypes.BOOLEAN, defaultValue: true },
+    Fecha_Creacion: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   },
   {
-    sequelize,                     // <- AQUÍ VA LA INSTANCIA
-    modelName: 'user'
+    sequelize,                      // ⬅️ IMPORTANTE
+    modelName: 'User',
+    tableName: 'tbl_Usuario',
+    timestamps: false,
   }
 );
 

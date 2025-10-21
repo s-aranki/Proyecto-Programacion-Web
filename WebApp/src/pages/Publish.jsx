@@ -17,6 +17,7 @@ export default function Publish(){
   const [endAt, setEndAt] = useState("");
   const [desc, setDesc] = useState("");
   const [files, setFiles] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Validaciones simples
   const errors = useMemo(()=>{
@@ -38,29 +39,82 @@ export default function Publish(){
 
   const isValid = Object.keys(errors).length === 0;
 
-  // Submit (demo sin backend)
-  const onSubmit = (e) => {
-    e.preventDefault();
-    if (!isValid) {
-      alert("Revisa los campos resaltados.");
-      return;
+const onSubmit = async (e) => {
+  e.preventDefault();
+  if (!isValid) {
+    alert("Revisa los campos resaltados.");
+    return;
+  }
+
+  try {
+    setIsSubmitting(true);
+
+    // Si usas Vite, puedes configurar VITE_API_URL=http://localhost:3000 en .env
+    const API_BASE = import.meta?.env?.VITE_API_URL || "";
+    const tokenJWT = localStorage.getItem("token"); // ajusta si lo guardas con otra clave
+
+    const fd = new FormData();
+    fd.append("title", title.trim());
+    fd.append("brand", brand.trim());
+    fd.append("model", model.trim());
+    fd.append("year", Number(year));
+    fd.append("km", Number(km || 0));
+    fd.append("transmission", trans); // "Automática" | "Manual" | "CVT"
+    fd.append("base_price", Number(base));
+    fd.append("start_at", new Date(startAt).toISOString()); // del input datetime-local
+    fd.append("end_at", new Date(endAt).toISOString());
+    fd.append("description", desc.trim());
+
+    // Adjunta solo File/Blob reales; ignora strings (urls previas)
+    files.forEach((f) => {
+      if (f instanceof File || f instanceof Blob) {
+        fd.append("images", f);
+      }
+    });
+
+    const res = await fetch(`${API_BASE}/api/auctions`, {
+      method: "POST",
+      headers: {
+        ...(tokenJWT ? { Authorization: `Bearer ${tokenJWT}` } : {}),
+        // NO pongas Content-Type; el navegador lo pone con boundary
+      },
+      body: fd,
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      // el backend devuelve { error } o { errors: [...] }
+      const msg =
+        data?.error ||
+        (Array.isArray(data?.errors)
+          ? data.errors.map((e) => e.msg || e.param || e).join(", ")
+          : "No se pudo publicar");
+      throw new Error(msg);
     }
-    const payload = {
-      titulo: title.trim(),
-      marca: brand.trim(),
-      modelo: model.trim(),
-      anio: Number(year),
-      km: Number(km||0),
-      transmision: trans,
-      base: Number(base),
-      startAt: startAt ? new Date(startAt).getTime() : null,
-      endAt: endAt ? new Date(endAt).getTime() : null,
-      desc: desc.trim(),
-      images: files.map(f => (typeof f === "string" ? f : f.name)), // demo
-    };
-    console.log("PUBLICAR DEMO =>", payload);
-    alert("Demo: aquí enviaríamos la subasta al backend.");
-  };
+
+    console.log("Subasta creada:", data);
+    alert("¡Subasta creada con éxito!");
+    // TODO: redirige al detalle si tienes ruta, ej.:
+    // navigate(`/auctions/${data.id}`);
+    // o resetea el formulario:
+    setTitle("");
+    setBrand("");
+    setModel("");
+    setYear(currentYear);
+    setKm("");
+    setTrans("Automática");
+    setBase("");
+    setStartAt("");
+    setEndAt("");
+    setDesc("");
+    setFiles([]);
+  } catch (err) {
+    console.error(err);
+    alert("Error: " + (err.message || "No se pudo publicar"));
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // Info para el resumen
   const duracion = useMemo(()=>{
