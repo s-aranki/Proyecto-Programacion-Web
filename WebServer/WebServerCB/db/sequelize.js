@@ -2,46 +2,101 @@
 require('dotenv').config();
 const { Sequelize, DataTypes } = require('sequelize');
 
-const sequelize = new Sequelize(process.env.DB_DATABASE, process.env.DB_USER, process.env.DB_PASSWORD, {
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT),
-  dialect: process.env.DB_CLIENT, // 'postgres' | 'mysql' | 'mssql'
-  logging: false,
-  pool: { max: 10, min: 0, idle: 10000 }
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT) || 3306,
+    dialect: process.env.DB_DIALECT || 'mysql',
+    logging: false,
+  }
+);
+
+/* =======================
+   MODELOS
+   ======================= */
+
+const Usuario = sequelize.define(
+  'Usuario',
+  {
+    Id_Usuario: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    Usuario: { type: DataTypes.STRING, allowNull: false },
+    Correo: { type: DataTypes.STRING, allowNull: false },
+    Contrasena: { type: DataTypes.STRING, allowNull: false },
+    Activa: { type: DataTypes.BOOLEAN, defaultValue: true },
+    Fecha_Creacion: { type: DataTypes.DATE, defaultValue: Sequelize.NOW },
+  },
+  { tableName: 'tbl_Usuario', timestamps: false }
+);
+
+const Publicacion = sequelize.define(
+  'Publicacion',
+  {
+    Id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    Titulo: { type: DataTypes.STRING, allowNull: false },
+    Id_Modelo: { type: DataTypes.INTEGER, allowNull: false },
+    Kilometraje: { type: DataTypes.INTEGER, defaultValue: 0 },
+    Id_Transmision: { type: DataTypes.INTEGER, allowNull: false },
+    Precio_Inicial: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
+    Fecha_Inicio: { type: DataTypes.DATE, allowNull: false },
+    Fecha_Fin: { type: DataTypes.DATE, allowNull: false },
+    Id_Estado: { type: DataTypes.INTEGER, allowNull: false },
+    Usuario_Grabacion: { type: DataTypes.INTEGER, allowNull: false },
+  },
+  { tableName: 'tbl_Publicacion', timestamps: false }
+);
+
+const Puja = sequelize.define(
+  'Puja',
+  {
+    Id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    Id_Publicacion: { type: DataTypes.INTEGER, allowNull: false },
+    Valor_a_Pujar: { type: DataTypes.DECIMAL(12, 2), allowNull: false },
+    Fecha_Grabacion: { type: DataTypes.DATE, defaultValue: Sequelize.NOW },
+    Usuario_Grabacion: { type: DataTypes.INTEGER, allowNull: false },
+  },
+  { tableName: 'tbl_Puja', timestamps: false }
+);
+
+/* =======================
+   RELACIONES
+   ======================= */
+
+// Una publicación tiene muchas pujas
+Publicacion.hasMany(Puja, { as: 'Pujas', foreignKey: 'Id_Publicacion' });
+Puja.belongsTo(Publicacion, { as: 'Publicacion', foreignKey: 'Id_Publicacion' });
+
+// Un usuario registra muchas publicaciones
+Usuario.hasMany(Publicacion, {
+  as: 'Publicaciones',
+  foreignKey: 'Usuario_Grabacion',
+});
+Publicacion.belongsTo(Usuario, {
+  as: 'Usuario',
+  foreignKey: 'Usuario_Grabacion',
 });
 
-// --- MODELOS ---
-const Usuario = sequelize.define('Usuario', {
-  Id_Usuario: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  Usuario: DataTypes.STRING,
-  Correo: DataTypes.STRING,
-  Contrasena: DataTypes.STRING,
-  Activa: DataTypes.BOOLEAN,
-  Fecha_Creacion: DataTypes.DATE
-}, { tableName: 'tbl_Usuario', timestamps: false });
+/* =======================
+   INIT HELPERS (opcional)
+   ======================= */
 
-const Publicacion = sequelize.define('Publicacion', {
-  Id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  Titulo: DataTypes.STRING,
-  Id_Modelo: DataTypes.INTEGER,
-  Kilometraje: DataTypes.INTEGER,
-  Id_Transmision: DataTypes.INTEGER,
-  Precio_Inicial: DataTypes.DECIMAL(12,2),
-  Fecha_Inicio: DataTypes.DATE,
-  Fecha_Fin: DataTypes.DATE,
-  Id_Estado: DataTypes.INTEGER,
-  Usuario_Grabacion: DataTypes.INTEGER
-}, { tableName: 'tbl_Publicacion', timestamps: false });
+async function initDb() {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Conexión a BD OK');
+  } catch (err) {
+    console.error('❌ Error de conexión a BD:', err);
+  }
+}
 
-const Puja = sequelize.define('Puja', {
-  Id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  Id_Publicacion: DataTypes.INTEGER,
-  Valor_a_Pujar: DataTypes.DECIMAL(12,2),
-  Fecha_Grabacion: DataTypes.DATE,
-  Usuario_Grabacion: DataTypes.INTEGER
-}, { tableName: 'tbl_Puja', timestamps: false });
-
-Publicacion.hasMany(Puja, { foreignKey: 'Id_Publicacion' });
-Puja.belongsTo(Publicacion, { foreignKey: 'Id_Publicacion' });
-
-module.exports = { sequelize, Sequelize, Usuario, Publicacion, Puja };
+module.exports = {
+  sequelize,
+  Sequelize,
+  DataTypes,
+  Usuario,
+  Publicacion,
+  Puja,
+  initDb,
+};
